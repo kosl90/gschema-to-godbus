@@ -6,6 +6,7 @@ var typeTpl = `import (
 
 {{ range $_, $enum := .Enums }}
 {{ $TypeName := ExportName $enum.Id }}
+// {{ $TypeName }} enum for {{ $enum.Id }}.
 type {{ $TypeName }} int32
 
 func (v {{ $TypeName }}) String() string {
@@ -19,6 +20,7 @@ func (v {{ $TypeName }}) String() string {
 	panic(fmt.Sprintf("should not reach here, unknown value %v", int(v)))
 }
 
+// {{ $TypeName }} enum values.
 const (
 	{{ range $_, $value := $enum.Values }}
 	{{ $TypeName }}{{ ExportName $value.Nick }} {{ $TypeName }} = {{ $value.Value }}
@@ -28,6 +30,7 @@ const (
 
 {{ range $_, $flags := .Flags }}
 {{ $TypeName := ExportName $flags.Id }}
+// {{ $TypeName }} flags for {{ $flags.Id }}.
 type {{ $TypeName }} uint32
 
 func (v {{ $TypeName }}) String() string {
@@ -41,10 +44,11 @@ func (v {{ $TypeName }}) String() string {
 	panic(fmt.Sprintf("should not reach here, unknown value %v", int(v)))
 }
 
-const {
+// {{ $TypeName }} flags values.
+const (
 	{{ range $_, $value := $flags.Values }}
 	{{ $TypeName }}Flags{{ExportName $value.Nick}} {{ $TypeName }} = {{ $value.Value }}
 	{{ end }}
-}
+)
 {{ end }}
 `
