@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/xml"
 	"fmt"
+	"go/format"
 	"os"
 	"path"
 	"sync"
@@ -36,6 +38,20 @@ const (
 	settingsFile = "autogen_settings.go"
 )
 
+func writeToFileWithFormat(bytes []byte, f *os.File, formatSrc bool) {
+	output := bufio.NewWriter(f)
+	if formatSrc {
+		src, err := format.Source(bytes)
+		if err != nil {
+			fmt.Println(err)
+		}
+		output.Write(src)
+	} else {
+		output.Write(bytes)
+	}
+	output.Flush()
+}
+
 func main() {
 	parseCMD()
 
@@ -62,16 +78,12 @@ func main() {
 	defer typeOutputFile.Close()
 	defer settingOutputFile.Close()
 
-	typeOutput := bufio.NewWriter(typeOutputFile)
-	settingOutput := bufio.NewWriter(settingOutputFile)
-	defer typeOutput.Flush()
-	defer settingOutput.Flush()
+	typeOutput := bytes.NewBufferString("")
+	settingOutput := bytes.NewBufferString("")
 	{
 		t := mustParse(pref, Prefix)
 		t.Execute(typeOutput, "")
-		typeOutput.Flush()
 		t.Execute(settingOutput, "")
-		settingOutput.Flush()
 	}
 
 	var v SchemaList
@@ -85,6 +97,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
+		writeToFileWithFormat(typeOutput.Bytes(), typeOutputFile, true)
 	}()
 
 	go func() {
@@ -93,6 +106,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
+		writeToFileWithFormat(settingOutput.Bytes(), settingOutputFile, true)
 	}()
 	WorkGroup.Wait()
 }

@@ -1,4 +1,4 @@
-[ ] format generated code.
+[x] format generated code.
 [ ] refactoring code.
 [ ] writing some tests.
 [ ] add support for array.
