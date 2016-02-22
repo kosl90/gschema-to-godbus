@@ -9,7 +9,6 @@ var settingsTpl = `import (
 )
 
 type SettingHook interface {
-	finializeOnce sync.Once
 	BeforeSettingFilter(key string, oldValue interface{}, newValue interface{}) bool
 	OnChanged(key string)
 }
@@ -37,6 +36,7 @@ const (
 ){{ end }}
 {{/* generate setting structure */}}
 type {{ $TypeName }} struct {
+	finializeOnce sync.Once
 	settings *gio.Settings
 	hook SettingHook
 
