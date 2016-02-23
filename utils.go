@@ -7,6 +7,29 @@ import (
 	"text/template"
 )
 
+var funcMap = template.FuncMap{
+	"ExportName":             exportName,
+	"PkgName":                pkgName,
+	"ToolVersion":            toolVersion,
+	"MapType":                mapType,
+	"MapTypeSetter":          mapTypeSetter,
+	"MapTypeGetter":          mapTypeGetter,
+	"TrimQuote":              trimQuote,
+	"DBusName":               dbusName,
+	"DBusPath":               dbusPath,
+	"ConvertToDBusInterface": convertToDBusInterface,
+	"GetKeyType":             getKeyType,
+	"GetDefaultValue":        getDefaultValue,
+	"Title":                  strings.Title,
+	"Predefined":             predefined,
+	"GetRangeType":           getRangeType,
+	"String":                 toString,
+}
+
+func predefined() []string {
+	return []string{"int16", "uint16", "int32", "uint32", "int64", "uint64", "double"}
+}
+
 func mustParse(tpl *template.Template, cont string) *template.Template {
 	return template.Must(tpl.Parse(cont))
 }
@@ -173,13 +196,28 @@ func getDefaultValue(schemas SchemaList, key Key) Result {
 		enum := schemas.FindEnum(key.Enum)
 		if enum.IsValid() {
 			for _, value := range enum.Values {
-				if value.Nick == trimQuote(key.Default) {
+				if value.Nick == trimQuote(key.Default.Value) {
 					return Result{Value: exportName(enum.Id) + exportName(value.Nick)}
 				}
 			}
-			return Result{Err: fmt.Errorf("invalid value %v", key.Default)}
+			return Result{Err: fmt.Errorf("invalid value %v", key.Default.Value)}
 		}
 		return Result{Err: fmt.Errorf("invalid enum id %q", key.Enum)}
 	}
-	return Result{Value: key.Default}
+	return Result{Value: key.Default.Value}
+}
+
+func getRangeType(key Key) string {
+	if key.IsEnum() {
+		return "int32"
+	} else if key.IsFlags() {
+		return "uint32"
+	}
+
+	return "Range" + VariantMap[key.Type]
+}
+
+func toString(s []byte) string {
+	fmt.Println(string(s))
+	return string(s)
 }

@@ -13,21 +13,6 @@ import (
 )
 
 var (
-	funcMap = template.FuncMap{
-		"ExportName":             exportName,
-		"PkgName":                pkgName,
-		"ToolVersion":            toolVersion,
-		"MapType":                mapType,
-		"MapTypeSetter":          mapTypeSetter,
-		"MapTypeGetter":          mapTypeGetter,
-		"TrimQuote":              trimQuote,
-		"DBusName":               dbusName,
-		"DBusPath":               dbusPath,
-		"ConvertToDBusInterface": convertToDBusInterface,
-		"GetKeyType":             getKeyType,
-		"GetDefaultValue":        getDefaultValue,
-	}
-
 	pref             = template.New("prefix header").Funcs(funcMap)
 	typeTemplate     = template.New("types").Funcs(funcMap)
 	settingsTemplate = template.New("settings").Funcs(funcMap)
@@ -43,7 +28,7 @@ func writeToFileWithFormat(bytes []byte, f *os.File, formatSrc bool) {
 	if formatSrc {
 		src, err := format.Source(bytes)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("format source error:", err)
 		}
 		output.Write(src)
 	} else {
@@ -54,6 +39,12 @@ func writeToFileWithFormat(bytes []byte, f *os.File, formatSrc bool) {
 
 func main() {
 	parseCMD()
+
+	var v SchemaList
+	if err := xml.Unmarshal([]byte(ReadFile(*_schema)), &v); err != nil {
+		fmt.Println("unmarshal xml failed", err)
+		return
+	}
 
 	var (
 		typeOutputFile    *os.File
@@ -86,15 +77,12 @@ func main() {
 		t.Execute(settingOutput, "")
 	}
 
-	var v SchemaList
-	xml.Unmarshal([]byte(ReadFile(*_schema)), &v)
-
 	var WorkGroup sync.WaitGroup
 	WorkGroup.Add(2)
 	go func() {
 		defer WorkGroup.Done()
 		if err := mustParse(typeTemplate, typeTpl).Execute(typeOutput, v); err != nil {
-			fmt.Println(err)
+			fmt.Println("write enum/flags type defined error:", err)
 			return
 		}
 		writeToFileWithFormat(typeOutput.Bytes(), typeOutputFile, true)
@@ -103,7 +91,7 @@ func main() {
 	go func() {
 		defer WorkGroup.Done()
 		if err := mustParse(settingsTemplate, settingsTpl).Execute(settingOutput, v); err != nil {
-			fmt.Println(err)
+			fmt.Println("write settings error:", err)
 			return
 		}
 		writeToFileWithFormat(settingOutput.Bytes(), settingOutputFile, true)

@@ -25,20 +25,48 @@ func (f Flags) IsValid() bool {
 	return f.Id != ""
 }
 
+// FIXME: support different type range.
 type Range struct {
 	Min string `xml:"min,attr"`
 	Max string `xml:"max,attr"`
 }
 
+type Choice struct {
+	Value string `xml:"value,attr"`
+}
+
+type Choices struct {
+	Choice []Choice `xml:"choice"`
+}
+
+type Alias struct {
+	Value string `xml:"value,attr"`
+}
+
+type Aliases struct {
+	Values []Alias `xml:"alias"`
+}
+
+type Default struct {
+	L10n    string `xml:"l10n,attr"`
+	Context string `xml:"context,attr"`
+	Value   string `xml:",chardata"`
+}
+
 type Key struct {
-	Name        string `xml:"name,attr"`
-	Type        string `xml:"type,attr"`
-	Enum        string `xml:"enum,attr"`
-	Flags       string `xml:"flags,attr"`
-	Default     string `xml:"default"`
-	Summary     string `xml:"summary"`
-	Description string `xml:"description"`
-	Range       Range
+	Name string `xml:"name,attr"` // can only contain lowercase letters, number and '-'
+
+	// exactly one of type, enum or flags must be given
+	Type  string `xml:"type,attr"`  // GVariant type string
+	Enum  string `xml:"enum,attr"`  // id of an enum type that has been defined earlier
+	Flags string `xml:"flags,attr"` // id of an flags type that has been defined earlier
+
+	Default     Default `xml:"default"`
+	Summary     string  `xml:"summary"`
+	Description string  `xml:"description"`
+	Range       Range   `xml:"range"`
+	Choices     Choices `xml:"choices"`
+	Aliases     Aliases `xml:"aliases"`
 }
 
 func (key Key) IsEnum() bool {
@@ -54,17 +82,30 @@ type Child struct {
 	Schema string `xml:"schema:attr"`
 }
 
+type Override struct {
+	Name    string `xml:"name,attr"`
+	L10n    string `xml:"l10n,attr"`
+	Context string `xml:"context,attr"`
+}
+
 type Schema struct {
-	Path     string  `xml:"path,attr"`
-	Id       string  `xml:"id,attr"`
-	Children []Child `xml:"child"`
-	Keys     []Key   `xml:"key"`
+	Path          string `xml:"path,attr"`
+	Id            string `xml:"id,attr"`
+	GettextDomain string `xml:"gettext-domain,attr"`
+	Extends       string `xml:"extends,attr"`
+	ListOf        string `xml:list-of,attr"`
+
+	Children  []Child    `xml:"child"`
+	Keys      []Key      `xml:"key"`
+	Overrides []Override `xml:"override"`
 }
 
 type SchemaList struct {
 	Schemas []Schema `xml:"schema"`
 	Enums   []Enum   `xml:"enum"`
-	Flags   []Flags  `xml:"flags"`
+	Flags   []Flags  `xml:"flags"` // cannot find flags in dtd for schemalist, but it works.
+
+	GettextDomain string `xml:"gettext-domain,attr"`
 }
 
 func (l SchemaList) FindEnum(id string) Enum {

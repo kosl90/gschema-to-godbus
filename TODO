@@ -1,9 +1,10 @@
 [x] format generated code.
 [ ] refactoring code.
 [ ] writing some tests.
-[ ] add support for array.
-[ ] add support for struct.
+[x] add support for range(implied range seems not to be necessary).
+[ ] add support for array type value.
+[ ] add support for struct type value.
 [ ] add support for alias.
 [ ] add support for choice.
 [ ] add support for configuration file.
-[ ] write each schema to different files.
+[ ] write each schema to different files mode.
