@@ -6,3 +6,4 @@
 [ ] add support for alias.
 [ ] add support for choice.
 [ ] add support for configuration file.
+[ ] write each schema to different files.
