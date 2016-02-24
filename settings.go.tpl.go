@@ -97,6 +97,10 @@ func (s *{{ $TypeName }}) listenSignal() {
 		}
 		s.hook.DidChange(gs, key)
 	})
+	{{ $sample := index $schema.Keys 0 }}
+	// make sure signal work
+	// detail: https://github.com/GNOME/glib/commit/8ff5668a458344da22d30491e3ce726d861b3619
+	s.{{ ExportName $sample.Name }}()
 }
 
 {{ range $_, $key := $schema.Keys }}{{ $PropName :=  ExportName $key.Name }}
