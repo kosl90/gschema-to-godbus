@@ -9,21 +9,30 @@ var settingsTpl = `import (
 )
 
 type SettingHook interface {
-	BeforeSettingFilter(key string, oldValue interface{}, newValue interface{}) bool
-	OnChanged(key string)
+	WillSet(gs *gio.Settings, key string, oldValue interface{}, newValue interface{}) bool // return true to continue setting.
+	DidSet(gs *gio.Settings, key string, oldValue interface{}, newValue interface{})
+	WillChange(gs *gio.Settings, key string) bool // return true to continue handleing change.
+	DidChange(gs *gio.Settings, key string)
 }
 
-type _DefaultHook struct {
+type DefaultSettingHook struct {
 }
 
-func (_DefaultHook) BeforeSettingFilter(key string, oldValue interface{}, newValue interface{}) bool {
+func (DefaultSettingHook) WillSet(gs *gio.Settings, key string, oldValue interface{}, newValue interface{}) bool {
 	return true
 }
 
-func (_DefaultHook) OnChanged(string) {
+func (DefaultSettingHook) DidSet(gs *gio.Settings, key string, oldValue interface{}, newValue interface{}) {
 }
 
-var _defaultHook = _DefaultHook{}
+func (DefaultSettingHook) WillChange(*gio.Settings, string) bool {
+	return true
+}
+
+func (DefaultSettingHook) DidChange(*gio.Settings, string) {
+}
+
+var _defaultHook = DefaultSettingHook{}
 
 {{ $schemas := . }}
 {{ range $_, $schema := .Schemas }}{{ if $schema.Keys }}{{ $TypeName := ExportName $schema.Id }}{{ if $schema.Keys }}
@@ -53,7 +62,11 @@ func (s *{{ $TypeName}}) GetDBusInfo() dbus.DBusInfo {
 	}
 }
 
-func New{{ $TypeName }}(hook SettingHook) *{{ $TypeName }} {
+func New{{ $TypeName}}() *{{ *TypeName }} {
+	return New${{ TypeName }}WithHook(nil)
+}
+
+func New{{ $TypeName }}WithHook(hook SettingHook) *{{ $TypeName }} {
 	if hook == nil {
 		hook = _defaultHook
 	}
@@ -72,14 +85,17 @@ func (s *{{ $TypeName }}) Finialize() {
 }
 
 func (s *{{ $TypeName }}) listenSignal() {
-	s.settings.Connect("changed", func(_ *gio.Settings, key string){
-		s.hook.OnChanged(key)
+	s.settings.Connect("changed", func(gs *gio.Settings, key string){
+		if !s.hook.WillChange(gs, key) {
+			return
+		}
 		switch key {
 		{{ range $_, $key := $schema.Keys }}{{ $PropName :=  ExportName $key.Name }}
 		case "{{ $key.Name }}":
 			dbus.Emit(s, "{{ $PropName }}Changed", s.{{ $PropName }}())
 		{{ end }}
 		}
+		s.hook.DidChange(gs, key)
 	})
 }
 
@@ -110,6 +126,11 @@ func (s *{{ $TypeName }}) set{{ $PropName }}(newValue {{ GetKeyType $key }}) boo
 	}
 
 	gs := s.settings
+	if !s.hook.WillSet(gs, "{{ $key.Name }}", oldValue, newValue) {
+		return false
+	}
+	defer s.hook.DidSet(gs, "{{ $key.Name }}", oldValue, newValue)
+
 	{{ if $key.IsEnum }}return gs.SetEnum("{{ $key.Name }}", newValue)
 	{{ else }}{{ if $key.IsFlags }}return gs.SetFlags("{{ $key.Name }}", newValue)
 	{{ else }}return gs.SetValue("{{ $key.Name }}", glib.NewVariant{{ MapTypeSetter $key.Type }}(newValue)){{ end }}{{ end }}
