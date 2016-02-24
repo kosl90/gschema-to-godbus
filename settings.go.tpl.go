@@ -62,8 +62,8 @@ func (s *{{ $TypeName}}) GetDBusInfo() dbus.DBusInfo {
 	}
 }
 
-func New{{ $TypeName}}() *{{ *TypeName }} {
-	return New${{ TypeName }}WithHook(nil)
+func New{{ $TypeName }}() *{{ $TypeName }} {
+	return New{{ $TypeName }}WithHook(nil)
 }
 
 func New{{ $TypeName }}WithHook(hook SettingHook) *{{ $TypeName }} {
