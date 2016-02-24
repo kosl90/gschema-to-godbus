@@ -7,4 +7,5 @@
 [ ] add support for alias.
 [ ] add support for choice.
 [ ] add support for configuration file.
+[ ] add support for optional property mode instead of setter/getter/changed siangl.
 [ ] write each schema to different files mode.
