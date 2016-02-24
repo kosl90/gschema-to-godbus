@@ -6,8 +6,8 @@ var typeTpl = `import (
 
 {{ range $_, $type := Predefined }}
 type Range{{ Title $type }} struct {
-	Min {{ if eq "{{ $type }}" "double" }}float64{{ else }}{{ $type }}{{ end }}
-	Max {{ if eq "{{ $type }}" "double" }}float64{{ else }}{{ $type }}{{ end }}
+	Min {{ if eq $type "double" }}float64{{ else }}{{ $type }}{{ end }}
+	Max {{ if eq $type "double" }}float64{{ else }}{{ $type }}{{ end }}
 }
 {{ end }}
 
