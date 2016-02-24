@@ -1,6 +1,7 @@
 package main
 
 var settingsTpl = `import (
+	"runtime"
 	"sync"
 
 	"gir/gio-2.0"
@@ -45,7 +46,7 @@ const (
 ){{ end }}
 {{/* generate setting structure */}}
 type {{ $TypeName }} struct {
-	finializeOnce sync.Once
+	finalizeOnce sync.Once
 	settings *gio.Settings
 	hook SettingHook
 
@@ -75,11 +76,15 @@ func New{{ $TypeName }}WithHook(hook SettingHook) *{{ $TypeName }} {
 		settings: gio.NewSettings("{{$schema.Id}}"),
 	}
 	s.listenSignal()
+	runtime.SetFinalizer(s, func(o interface{}) {
+		s := o.(*{{ $TypeName }})
+		s.finalize()
+	})
 	return s
 }
 
-func (s *{{ $TypeName }}) Finialize() {
-	s.finializeOnce.Do(func() {
+func (s *{{ $TypeName }}) finalize() {
+	s.finalizeOnce.Do(func() {
 		s.settings.Unref()
 	})
 }
