@@ -172,10 +172,10 @@ func trimQuote(a string) string {
 }
 
 func convertToDBusInterface(schemaID string) string {
-	names := strings.Split(schemaID, "-")
-	exportName := strings.Title(names[len(names)-1])
+	names := strings.Split(schemaID, ".")
+	exportName := normalize(names[len(names)-1])
 	names[len(names)-1] = exportName
-	return strings.Join(names, "")
+	return strings.Join(names, ".")
 }
 
 func dbusName() string {
