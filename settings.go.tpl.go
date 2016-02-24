@@ -100,11 +100,11 @@ func (s *{{ $TypeName }}) listenSignal() {
 }
 
 {{ range $_, $key := $schema.Keys }}{{ $PropName :=  ExportName $key.Name }}
-{{/* not generated GetXXRange for "type", "enum", "flags" */}}
+{{/* not generated GetRangeOfXX for "type", "enum", "flags" */}}
 {{ if $key.Range.Min }}
 {{ $rangeType := GetRangeType $key }}
-// Get{{ $PropName }}Range gets the value range of {{ $PropName }}.
-func (s *{{ $TypeName }}) Get{{ $PropName }}Range(key string) {{ $rangeType }} {
+// GetRangeOf{{ $PropName }} gets the value range of {{ $PropName }}.
+func (s *{{ $TypeName }}) GetRangeOf{{ $PropName }}(key string) {{ $rangeType }} {
 	return {{ $rangeType }}{Min: {{ $key.Range.Min }}, Max: {{ $key.Range.Max }}}
 }
 {{ end }}
